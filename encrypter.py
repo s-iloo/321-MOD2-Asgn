@@ -13,7 +13,7 @@ class EncryptionMode(Enum):
 
 def read_text(file_path, mode):
     try:
-        with open(file_path, 'r') as file:
+        with open(file_path, 'rb') as file:
             content = file.read()
             print(f"content is \n{content}\n")
     except FileNotFoundError:
