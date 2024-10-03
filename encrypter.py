@@ -83,8 +83,21 @@ def encode_text_ecb(content, file_path):
 
 
 def encode_text_cbc(content, file_path):
+    iv = secrets.token_bytes(16)
+    print("Generated IV for CBC: ", iv.hex())
+
+    encrypted_byte_array = b""
+
+    # theoretical padding function
+    padded_content = b"123"
+
+    # cbc_cipher = AES.new(key, AES.MODE_CBC)
+
+    for i in range(54, len(content), 16):
+        # TODO
+        return
+
     return
-    # TODO cbc
 
 
 def print_bits_from_byte_array(barray):
