@@ -34,6 +34,16 @@ def encode_text(content, file_path, encryption_mode):
         print(f"unrecognized encryption mode: {encryption_mode}")
 
 
+def add_padding(content, file_size):
+    if (file_size - 54) % 16 != 0:
+        padding_size = 16 - ((file_size - 54) % 16)
+        print("padding_size: ", padding_size)
+        padding = bytes([padding_size] * padding_size)
+        # print(content + padding)
+        return content + padding
+
+    return content
+
 def encode_text_ecb(content, file_path):
     # create a 128-bit (16-byte) key
     key = secrets.token_bytes(16)
@@ -45,9 +55,12 @@ def encode_text_ecb(content, file_path):
 
     # padding is in whole bytes, the value of each added byte is the
     # number of bytes that are added, i.e. N bytes, each of value N are added
-    if file_size % 16 != 0:
-        content = pad(content.encode('utf-8'), 16, 'pkcs7')
-        print(f"padded content is {content.hex()}")
+    # if file_size % 16 != 0:
+
+
+    #     content = pad(content.encode('utf-8'), 16, 'pkcs7')
+    #     print(f"padded content is {content.hex()}")
+    content = add_padding(content, file_size)
 
     # TODO xor content?
 
@@ -64,12 +77,13 @@ def encode_text_ecb(content, file_path):
         block = content[i:i + 16]
         encrypted_byte_array += ecb_cipher.encrypt(block)
 
+    encrypted_byte_array = header + encrypted_byte_array
     print(f"encrypted byte array is {encrypted_byte_array.hex()}")
 
     print("bits are ", end="")
     print_bits_from_byte_array(encrypted_byte_array)
 
-    print(f"DECRYPTOED: {ecb_cipher.decrypt(encrypted_byte_array)}")
+    # print(f"DECRYPTOED: {ecb_cipher.decrypt(encrypted_byte_array)}")
 
     return encrypted_byte_array
 
@@ -96,8 +110,7 @@ def encode_text_cbc(content, file_path):
     for i in range(54, len(content), 16):
         # TODO
         return
-
-    return
+        return
 
 
 def print_bits_from_byte_array(barray):
