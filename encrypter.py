@@ -56,9 +56,11 @@ def encode_text_ecb(content, file_path):
     ecb_cipher = AES.new(key, AES.MODE_ECB)
     encrypted_byte_array = b""
 
+    header = content[0:54]
+
     # loop through 128 bits (16 bytes) at a time and
     # encrypt each 128 bit block with the generated key
-    for i in range(0, len(content), 16):
+    for i in range(54, len(content), 16):
         block = content[i:i + 16]
         encrypted_byte_array += ecb_cipher.encrypt(block)
 
