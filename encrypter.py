@@ -51,6 +51,8 @@ def encode_text_ecb(content, file_path):
         content = pad(content.encode('utf-8'), 16, 'pkcs7')
         print(f"padded content is {content}")
 
+    # TODO xor content?
+
     # init the cipher using key, and init the byte array to hold encrypted content
     # each block encrypted separately with the same key
     ecb_cipher = AES.new(key, AES.MODE_ECB)
@@ -84,9 +86,9 @@ def handle_mode_input():
         if mode == "ECB":
             print("ECB selected, running encryption...")
             return EncryptionMode.ECB
-        elif mode == "ECB":
-            print("ECB selected, running encryption...")
-            return EncryptionMode.ECB
+        elif mode == "CBC":
+            print("CBC selected, running encryption...")
+            return EncryptionMode.CBC
         print("Received input is invalid. Try again.")
 
 
