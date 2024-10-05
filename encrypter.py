@@ -43,6 +43,15 @@ def add_padding(content, file_size):
         return content + padding
 
     return content
+        # Calculate padding size
+    # padding_size = 16 - ((file_size - 54) % 16)
+    # print("padding_size: ", padding_size)
+
+    # # Create padding (PKCS7-style padding: each byte is the size of the padding)
+    # padding = bytes([padding_size] * padding_size)
+
+    # # Return content with padding appended
+    # return content + padding
 
 def encode_text_ecb(content, file_path):
     # create a 128-bit (16-byte) key
@@ -57,11 +66,9 @@ def encode_text_ecb(content, file_path):
     # number of bytes that are added, i.e. N bytes, each of value N are added
     # if file_size % 16 != 0:
 
-
-    #     content = pad(content.encode('utf-8'), 16, 'pkcs7')
     #     print(f"padded content is {content.hex()}")
     content = add_padding(content, file_size)
-
+    print("content size is: ", len(content[54:]))
     # TODO xor content?
 
     # init the cipher using key, and init the byte array to hold encrypted content
@@ -70,11 +77,14 @@ def encode_text_ecb(content, file_path):
     encrypted_byte_array = b""
 
     header = content[0:54]
+    print("len of header ", len(header))
 
     # loop through 128 bits (16 bytes) at a time and
     # encrypt each 128 bit block with the generated key
     for i in range(54, len(content), 16):
+        # print("i is ", i)
         block = content[i:i + 16]
+        # print("len of block is ", len(block))
         encrypted_byte_array += ecb_cipher.encrypt(block)
 
     encrypted_byte_array = header + encrypted_byte_array
@@ -83,8 +93,9 @@ def encode_text_ecb(content, file_path):
     print("bits are ", end="")
     print_bits_from_byte_array(encrypted_byte_array)
 
-    # print(f"DECRYPTOED: {ecb_cipher.decrypt(encrypted_byte_array)}")
+    print(f"DECRYPTOED: {ecb_cipher.decrypt(encrypted_byte_array[54:])}")
 
+    write_to_file(encrypted_byte_array)
     return encrypted_byte_array
 
 
@@ -94,23 +105,47 @@ def encode_text_ecb(content, file_path):
 # 1) prompt
 # 2) write to same exact file every time (idk about this)
 # 3) generate file name (kinda interesting)
+def write_to_file(content):
+    file = input("Enter file to write encrypted data: ")
+    with open(file, "wb") as file:
+        file.write(content)
+    
 
 
 def encode_text_cbc(content, file_path):
+    # generate the iv and key
     iv = secrets.token_bytes(16)
+    key = secrets.token_bytes(16)
     print("Generated IV for CBC: ", iv.hex())
 
+    # find the file size in bytes
+    file_size = os.stat(file_path).st_size
+
     encrypted_byte_array = b""
-
-    # theoretical padding function
-    padded_content = b"123"
-
-    # cbc_cipher = AES.new(key, AES.MODE_CBC)
+    # generate the cipher
+    cbc_cipher = AES.new(key, AES.MODE_CBC)
+    # add padding to plaintext
+    content = add_padding(content, file_size)
+    # XOR first plaintext block with IV
+    xor_operand = iv
 
     for i in range(54, len(content), 16):
-        # TODO
-        return
-        return
+        # convert the bytes to ints for xor
+        int1 = int.from_bytes(content[i:i+16], 'big')
+        int2 = int.from_bytes(xor_operand, 'big')
+        # xor
+        xor_output = int1 ^ int2
+        # convert the xor_output back to 16 byte block
+        xor_output = xor_output.to_bytes(16, 'big')
+        print("len of xor_output ", len(xor_output))
+        # encrypt
+        cipher_text = cbc_cipher.encrypt(xor_output)
+        encrypted_byte_array += cipher_text
+        # set the next xor_operand to the generated cipher text
+        xor_operand = cipher_text
+
+    write_to_file(encrypted_byte_array)
+    return encrypted_byte_array
 
 
 def print_bits_from_byte_array(barray):
