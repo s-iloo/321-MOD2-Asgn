@@ -125,6 +125,7 @@ def encode_text_cbc(content, file_path):
     # generate the cipher
     cbc_cipher = AES.new(key, AES.MODE_CBC)
     # add padding to plaintext
+    print("len of content ", len(content))
     content = add_padding(content, file_size)
     # XOR first plaintext block with IV
     xor_operand = iv
@@ -137,7 +138,6 @@ def encode_text_cbc(content, file_path):
         xor_output = int1 ^ int2
         # convert the xor_output back to 16 byte block
         xor_output = xor_output.to_bytes(16, 'big')
-        print("len of xor_output ", len(xor_output))
         # encrypt
         cipher_text = cbc_cipher.encrypt(xor_output)
         encrypted_byte_array += cipher_text
