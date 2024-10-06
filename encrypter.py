@@ -174,14 +174,22 @@ def submit(string, key, iv):
     return encrypt
 
 def verify(string):
+    # generating the constant key and iv
     key = secrets.token_bytes(16)
     iv = secrets.token_bytes(16)
+
+    # submitting the encrypted string
     encrypted_string = submit(string, key, iv)
+
+    # generating the cipher with the constant key and iv so we can decrypt
     cbc_cipher = AES.new(key, AES.MODE_CBC, iv)
     decrypted = cbc_cipher.decrypt(encrypted_string)
+
     print("len of decrypted is: ", len(decrypted))
     print(decrypted)
     print("len of string is ", len(string) + len(prepend) + len(append))
+
+    # calculating padding so we can unpad (THIS AIN'T RIGHT)
     padding_size = 16 - ((len(string) + len(prepend) + len(append)) % 16)
     print("padding size is ", padding_size)
     print("len of decrypted minus padding size is: ", len(decrypted) - padding_size)
