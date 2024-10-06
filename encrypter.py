@@ -1,9 +1,12 @@
 from Crypto.Cipher import AES
-from Crypto.Util.Padding import pad
+from Crypto.Util.Padding import pad, unpad
 from enum import Enum
 import secrets
 import os
+from urllib.parse import quote
 
+prepend = "userid=456;userdata="
+append = ";session-id=31337"
 
 # enum to represent our different encryption modes
 class EncryptionMode(Enum):
@@ -29,29 +32,20 @@ def encode_text(content, file_path, encryption_mode):
     if encryption_mode == EncryptionMode.ECB:
         return encode_text_ecb(content, file_path)
     elif encryption_mode == EncryptionMode.CBC:
-        return encode_text_cbc(content, file_path)
+        return encode_text_cbc(content, file_path = file_path)
     else:
         print(f"unrecognized encryption mode: {encryption_mode}")
 
 
-def add_padding(content, file_size):
-    if (file_size - 54) % 16 != 0:
-        padding_size = 16 - ((file_size - 54) % 16)
+def add_padding(content, file_size, starting = 54):
+    if (file_size - starting) % 16 != 0:
+        padding_size = 16 - ((file_size - starting) % 16)
         print("padding_size: ", padding_size)
         padding = bytes([padding_size] * padding_size)
         # print(content + padding)
         return content + padding
 
     return content
-        # Calculate padding size
-    # padding_size = 16 - ((file_size - 54) % 16)
-    # print("padding_size: ", padding_size)
-
-    # # Create padding (PKCS7-style padding: each byte is the size of the padding)
-    # padding = bytes([padding_size] * padding_size)
-
-    # # Return content with padding appended
-    # return content + padding
 
 def encode_text_ecb(content, file_path):
     # create a 128-bit (16-byte) key
@@ -112,25 +106,37 @@ def write_to_file(content):
     
 
 
-def encode_text_cbc(content, file_path):
+def encode_text_cbc(content, file_path = None, given_key = None, given_iv = None, starting = None):
     # generate the iv and key
-    iv = secrets.token_bytes(16)
-    key = secrets.token_bytes(16)
+    if given_key is None  and given_iv is None:
+        iv = secrets.token_bytes(16)
+        key = secrets.token_bytes(16)
+    else:
+        iv = given_iv
+        key = given_key
+
     print("Generated IV for CBC: ", iv.hex())
 
     # find the file size in bytes
-    file_size = os.stat(file_path).st_size
+    if file_path is not None:
+        file_size = os.stat(file_path).st_size
+    else:
+        file_size = len(content)
+    
+    if starting is None:
+        starting = 54
+
 
     encrypted_byte_array = b""
     # generate the cipher
-    cbc_cipher = AES.new(key, AES.MODE_CBC)
+    cbc_cipher = AES.new(key, AES.MODE_CBC, iv)
     # add padding to plaintext
     print("len of content ", len(content))
-    content = add_padding(content, file_size)
+    content = add_padding(content, file_size, starting)
     # XOR first plaintext block with IV
     xor_operand = iv
 
-    for i in range(54, len(content), 16):
+    for i in range(starting, len(content), 16):
         # convert the bytes to ints for xor
         int1 = int.from_bytes(content[i:i+16], 'big')
         int2 = int.from_bytes(xor_operand, 'big')
@@ -158,6 +164,33 @@ def print_bits_from_byte_array(barray):
             byte >>= 1
     print("\n")
 
+def submit(string, key, iv):
+    string = quote(string)
+    new_string = prepend + string + append
+    print(new_string)
+
+    encrypt = encode_text_cbc(new_string.encode("utf-8"), given_key = key, given_iv = iv, starting = 0)
+
+    return encrypt
+
+def verify(string):
+    key = secrets.token_bytes(16)
+    iv = secrets.token_bytes(16)
+    encrypted_string = submit(string, key, iv)
+    cbc_cipher = AES.new(key, AES.MODE_CBC, iv)
+    decrypted = cbc_cipher.decrypt(encrypted_string)
+    print("len of decrypted is: ", len(decrypted))
+    print(decrypted)
+    print("len of string is ", len(string) + len(prepend) + len(append))
+    padding_size = 16 - ((len(string) + len(prepend) + len(append)) % 16)
+    print("padding size is ", padding_size)
+    print("len of decrypted minus padding size is: ", len(decrypted) - padding_size)
+    decrypted = decrypted[:len(decrypted) - padding_size]
+
+    print(f"decrypted: {decrypted.decode('utf-8')}")
+    # print(f"decrypted: {bytes.fromhex(decrypted.hex()).decode('utf-8')}")
+    return
+
 
 def handle_mode_input():
     while True:
@@ -178,3 +211,5 @@ if __name__ == "__main__":
     # we can let users input what encryption they want to use... (or not if I'm missing something)
     encryption_mode = handle_mode_input()
     read_text(file, encryption_mode)
+    string = input("Enter user provided string: ")
+    verify(string)
