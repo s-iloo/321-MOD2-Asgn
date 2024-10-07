@@ -152,6 +152,8 @@ def encode_text_cbc(content, file_path = None, given_key = None, given_iv = None
 
     write_to_file(encrypted_byte_array)
     print(encrypted_byte_array)
+    # TODO: prepend the header to the encrypted_byte_array and then figure out how to not do that 
+    # when we are doing cbc for the submit/verify functions (should be p simple)
     return encrypted_byte_array
 
 
@@ -212,6 +214,8 @@ def verify(string):
     # decrypting the encrypted string
     decrypted_string = cbc_decrypt(encrypted_string, key, iv)
 
+    # TODO: get rid of the padding in the decrypted_string
+
     if ";admin=true;" in decrypted_string.decode("utf-8"):
         print("Admin is true??")
         return True
@@ -232,10 +236,12 @@ def handle_mode_input():
 
 
 if __name__ == "__main__":
-    # should we validate file names? (I think I'm probably thinking to hard about thinhgs)
+    # should we validate file names? (I think I'm probably thinking to hard about things)
     file = input("Enter file name: ")
     # we can let users input what encryption they want to use... (or not if I'm missing something)
     encryption_mode = handle_mode_input()
     read_text(file, encryption_mode)
+
+    # idk if we should do it like this but works for now ig
     string = input("Enter user provided string: ")
     verify(string)
