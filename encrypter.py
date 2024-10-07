@@ -151,6 +151,7 @@ def encode_text_cbc(content, file_path = None, given_key = None, given_iv = None
         xor_operand = cipher_text
 
     write_to_file(encrypted_byte_array)
+    print(encrypted_byte_array)
     return encrypted_byte_array
 
 
@@ -173,30 +174,45 @@ def submit(string, key, iv):
 
     return encrypt
 
+def cbc_decrypt(ciphertext, key, iv):
+    # the first xor_operand is the iv
+    xor_operand = iv
+    # generate the cbc_cipher with the key and the iv
+    cbc_cipher = AES.new(key, AES.MODE_CBC, iv)
+    plaintext_array = b""
+
+    # loop through the cipher text 
+    for i in range(0, len(ciphertext), 16):
+        decrypt_result = cbc_cipher.decrypt(ciphertext[i:i + 16])
+
+        decrypt_result = int.from_bytes(decrypt_result, 'big')
+        xor_operand = int.from_bytes(xor_operand, 'big')
+
+        # the xor_output should be the first block of plaintext
+        xor_output = xor_operand ^ decrypt_result
+        print(xor_output.to_bytes(16, 'big'))
+        
+        # append the plaintext block 
+        plaintext_array += xor_output.to_bytes(16, 'big')
+
+        # set the next xor_operand
+        xor_operand = ciphertext[i:i + 16]
+
+    print(plaintext_array)
+    return plaintext_array
+
 def verify(string):
     # generating the constant key and iv
     key = secrets.token_bytes(16)
     iv = secrets.token_bytes(16)
 
-    # submitting the encrypted string
+    # getting the encrypted string
     encrypted_string = submit(string, key, iv)
 
-    # generating the cipher with the constant key and iv so we can decrypt
-    cbc_cipher = AES.new(key, AES.MODE_CBC, iv)
-    decrypted = cbc_cipher.decrypt(encrypted_string)
+    # decrypting the encrypted string
+    decrypted_string = cbc_decrypt(encrypted_string, key, iv)
 
-    print("len of decrypted is: ", len(decrypted))
-    print(decrypted)
-    print("len of string is ", len(string) + len(prepend) + len(append))
-
-    # calculating padding so we can unpad (THIS AIN'T RIGHT)
-    padding_size = 16 - ((len(string) + len(prepend) + len(append)) % 16)
-    print("padding size is ", padding_size)
-    print("len of decrypted minus padding size is: ", len(decrypted) - padding_size)
-    decrypted = decrypted[:len(decrypted) - padding_size]
-
-    print(f"decrypted: {decrypted.decode('utf-8')}")
-    # print(f"decrypted: {bytes.fromhex(decrypted.hex()).decode('utf-8')}")
+    
     return
 
 
