@@ -44,7 +44,7 @@ def add_padding(content, file_size, starting = 54):
         padding_size = 16 - ((file_size - starting) % 16)
         print("padding_size: ", padding_size)
         padding = bytes([padding_size] * padding_size)
-        # print(content + padding)
+        
         return content + padding
 
     return content
@@ -60,9 +60,7 @@ def encode_text_ecb(content, file_path):
 
     # padding is in whole bytes, the value of each added byte is the
     # number of bytes that are added, i.e. N bytes, each of value N are added
-    # if file_size % 16 != 0:
-
-    #     print(f"padded content is {content.hex()}")
+    
     content = add_padding(content, file_size)
     print("content size is: ", len(content[54:]))
     # TODO xor content?
@@ -78,9 +76,7 @@ def encode_text_ecb(content, file_path):
     # loop through 128 bits (16 bytes) at a time and
     # encrypt each 128 bit block with the generated key
     for i in range(54, len(content), 16):
-        # print("i is ", i)
         block = content[i:i + 16]
-        # print("len of block is ", len(block))
         encrypted_byte_array += ecb_cipher.encrypt(block)
 
     encrypted_byte_array = header + encrypted_byte_array
