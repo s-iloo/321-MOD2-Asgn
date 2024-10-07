@@ -38,6 +38,8 @@ def encode_text(content, file_path, encryption_mode):
 
 
 def add_padding(content, file_size, starting = 54):
+    # TODO: saw something online that said that CBC always adds a full block of padding?
+    # unsure about that, should maybe check it out...
     if (file_size - starting) % 16 != 0:
         padding_size = 16 - ((file_size - starting) % 16)
         print("padding_size: ", padding_size)
