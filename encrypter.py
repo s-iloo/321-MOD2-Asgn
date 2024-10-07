@@ -212,9 +212,11 @@ def verify(string):
     # decrypting the encrypted string
     decrypted_string = cbc_decrypt(encrypted_string, key, iv)
 
-    
-    return
-
+    if ";admin=true;" in decrypted_string.decode("utf-8"):
+        print("Admin is true??")
+        return True
+    else: 
+        return False
 
 def handle_mode_input():
     while True:
