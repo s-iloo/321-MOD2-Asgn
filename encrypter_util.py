@@ -51,3 +51,10 @@ def handle_mode_input():
             print("CBC selected, running encryption...")
             return EncryptionMode.CBC
         print("Received input is invalid. Try again.")
+
+
+# given ciphertext, modifies it such that the decrypted plaintext contains the target string
+def bit_flip_attack(ciphertext):
+    # string we want to inject into the plaintext
+    target = b";admin=true;"
+

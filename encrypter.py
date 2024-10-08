@@ -3,7 +3,7 @@ import secrets
 import os
 from urllib.parse import quote
 
-from encrypter_util import handle_mode_input, EncryptionMode, add_padding, write_to_file, print_bits_from_byte_array
+from encrypter_util import handle_mode_input, EncryptionMode, add_padding, write_to_file, print_bits_from_byte_array, bit_flip_attack
 
 prepend = "userid=456;userdata="
 append = ";session-id=31337"
@@ -175,6 +175,9 @@ def verify(string):
 
     # getting the encrypted string
     encrypted_string = submit(string, key, iv)
+
+    # bit flip?
+    bit_flip_attack(encrypted_string)
 
     # decrypting the encrypted string
     decrypted_string = cbc_decrypt(encrypted_string, key, iv)
