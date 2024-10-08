@@ -42,10 +42,11 @@ def print_bits_from_byte_array(barray):
 
 
 # prompting the user for file name, writing encrypted data to said file
+# note that files that require padding may not be open-able in original format
 def write_to_file(content):
     file_name = input("Enter file (w/o extension) to write encrypted data: ")
     with open("output/" + file_name, "wb") as f:
-        f.write(remove_padding(content))
+        f.write(content)
 
 
 def handle_mode_input():

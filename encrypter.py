@@ -52,7 +52,6 @@ def encode_text_ecb(content, file_path):
 
     content = add_padding(content, file_size)
     print("content size is: ", len(content[54:]))
-    # TODO xor content?
 
     # init the cipher using key, and init the byte array to hold encrypted content
     # each block encrypted separately with the same key
