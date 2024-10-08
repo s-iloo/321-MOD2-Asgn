@@ -1,9 +1,9 @@
 #!/bin/bash
 
 python3 encrypter.py <<EOF
-bmps/4by4.bmp
+bmps/robot.bmp
 ECB
-output
+output.bmp
 hello
-output1
+helloencrypted.bin
 EOF

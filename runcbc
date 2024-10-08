@@ -3,7 +3,7 @@
 python3 encrypter.py <<EOF
 bmps/4by4.bmp
 CBC
-output
+output.bmp
 hello
-output1
+cbchello.bin
 EOF

@@ -36,7 +36,7 @@ def print_bits_from_byte_array(barray):
 # prompting the user for file name, writing encrypted data to said file
 def write_to_file(content):
     file_name = input("Enter file (w/o extension) to write encrypted data: ")
-    with open(file_name + ".bin", "wb") as f:
+    with open("output/" + file_name, "wb") as f:
         f.write(content)
 
 
