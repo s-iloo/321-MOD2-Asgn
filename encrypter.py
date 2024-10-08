@@ -80,7 +80,7 @@ def encode_text_ecb(content, file_path):
     return encrypted_byte_array
 
 
-def encode_text_cbc(content, file_path=None, given_key=None, given_iv=None, starting=None):
+def encode_text_cbc(content, file_path=None, given_key=None, given_iv=None, starting=54):
     # generate the iv and key
     if given_key is None and given_iv is None:
         iv = secrets.token_bytes(16)
@@ -96,9 +96,6 @@ def encode_text_cbc(content, file_path=None, given_key=None, given_iv=None, star
         file_size = os.stat(file_path).st_size
     else:
         file_size = len(content)
-
-    if starting is None:
-        starting = 54
 
     encrypted_byte_array = b""
     # generate the cipher
@@ -127,7 +124,7 @@ def encode_text_cbc(content, file_path=None, given_key=None, given_iv=None, star
     print(encrypted_byte_array)
     # TODO: prepend the header to the encrypted_byte_array and then figure out how to not do that 
     # when we are doing cbc for the submit/verify functions (should be p simple)
-    return encrypted_byte_array
+    return content[0:starting] + encrypted_byte_array
 
 
 def submit(string, key, iv):
