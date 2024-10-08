@@ -3,7 +3,7 @@ import secrets
 import os
 from urllib.parse import quote
 
-from encrypter_util import handle_mode_input, EncryptionMode, add_padding, write_to_file, print_bits_from_byte_array, bit_flip_attack
+from encrypter_util import *
 
 prepend = "userid=456;userdata="
 append = ";session-id=31337"
@@ -120,11 +120,9 @@ def encode_text_cbc(content, file_path=None, given_key=None, given_iv=None, star
         # set the next xor_operand to the generated cipher text
         xor_operand = cipher_text
 
+    encrypted_byte_array = content[0:starting] + encrypted_byte_array
     write_to_file(encrypted_byte_array)
-    print(encrypted_byte_array)
-    # TODO: prepend the header to the encrypted_byte_array and then figure out how to not do that 
-    # when we are doing cbc for the submit/verify functions (should be p simple)
-    return content[0:starting] + encrypted_byte_array
+    return encrypted_byte_array
 
 
 def submit(string, key, iv):
@@ -179,7 +177,12 @@ def verify(string):
     # decrypting the encrypted string
     decrypted_string = cbc_decrypt(encrypted_string, key, iv)
 
-    # TODO: get rid of the padding in the decrypted_string
+    print("DECRYPT WORK")
+    print(decrypted_string)
+
+    decrypted_string = remove_padding(decrypted_string)
+
+    print(decrypted_string)
 
     if ";admin=true;" in decrypted_string.decode("utf-8"):
         print("Admin is true??")

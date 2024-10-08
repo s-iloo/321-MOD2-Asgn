@@ -21,6 +21,14 @@ def add_padding(content, file_size, starting=54):
     return content
 
 
+# padding remover based on how we pad in add_padding
+def remove_padding(padded_data):
+    # the last byte indicates the padding length
+    padding_len = padded_data[-1]
+    print(f"padding length {padding_len}")
+    return padded_data[:-padding_len]
+
+
 # given a byte array, prints out the bits that make up said array
 def print_bits_from_byte_array(barray):
     for byte in barray:
@@ -37,7 +45,7 @@ def print_bits_from_byte_array(barray):
 def write_to_file(content):
     file_name = input("Enter file (w/o extension) to write encrypted data: ")
     with open("output/" + file_name, "wb") as f:
-        f.write(content)
+        f.write(remove_padding(content))
 
 
 def handle_mode_input():
@@ -57,4 +65,3 @@ def handle_mode_input():
 def bit_flip_attack(ciphertext):
     # string we want to inject into the plaintext
     target = b";admin=true;"
-
