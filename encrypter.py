@@ -1,20 +1,17 @@
 from Crypto.Cipher import AES
-from Crypto.Util.Padding import pad, unpad
-from enum import Enum
 import secrets
 import os
 from urllib.parse import quote
 
+from encrypter_util import handle_mode_input, EncryptionMode, add_padding, write_to_file, print_bits_from_byte_array
+
 prepend = "userid=456;userdata="
 append = ";session-id=31337"
 
-# enum to represent our different encryption modes
-class EncryptionMode(Enum):
-    ECB = 1
-    CBC = 2
 
-
-def read_text(file_path, mode):
+def main():
+    file_path = input("Enter relative path to file: ")
+    encryption_mode = handle_mode_input()
     try:
         with open(file_path, 'rb') as file:
             content = file.read()
@@ -23,7 +20,11 @@ def read_text(file_path, mode):
         print(f"Error: file not found {file_path}")
 
     # TODO handle header size (54 bytes). We are encrypting .bmp files, not .txt files
-    encode_text(content, file_path, mode)
+    encode_text(content, file_path, encryption_mode)
+
+    # idk if we should do it like this but works for now ig
+    string = input("Enter user provided string: ")
+    verify(string)
 
 
 # general purpose function that takes an encryption mode and
@@ -32,22 +33,10 @@ def encode_text(content, file_path, encryption_mode):
     if encryption_mode == EncryptionMode.ECB:
         return encode_text_ecb(content, file_path)
     elif encryption_mode == EncryptionMode.CBC:
-        return encode_text_cbc(content, file_path = file_path)
+        return encode_text_cbc(content, file_path=file_path)
     else:
         print(f"unrecognized encryption mode: {encryption_mode}")
 
-
-def add_padding(content, file_size, starting = 54):
-    # TODO: saw something online that said that CBC always adds a full block of padding?
-    # unsure about that, should maybe check it out...
-    if (file_size - starting) % 16 != 0:
-        padding_size = 16 - ((file_size - starting) % 16)
-        print("padding_size: ", padding_size)
-        padding = bytes([padding_size] * padding_size)
-        
-        return content + padding
-
-    return content
 
 def encode_text_ecb(content, file_path):
     # create a 128-bit (16-byte) key
@@ -60,7 +49,7 @@ def encode_text_ecb(content, file_path):
 
     # padding is in whole bytes, the value of each added byte is the
     # number of bytes that are added, i.e. N bytes, each of value N are added
-    
+
     content = add_padding(content, file_size)
     print("content size is: ", len(content[54:]))
     # TODO xor content?
@@ -91,22 +80,9 @@ def encode_text_ecb(content, file_path):
     return encrypted_byte_array
 
 
-# TODO want to write the encrypted data to a binary file (as another function)
-# should we prompt the user for a file name?
-# either:
-# 1) prompt
-# 2) write to same exact file every time (idk about this)
-# 3) generate file name (kinda interesting)
-def write_to_file(content):
-    file = input("Enter file to write encrypted data: ")
-    with open(file, "wb") as file:
-        file.write(content)
-    
-
-
-def encode_text_cbc(content, file_path = None, given_key = None, given_iv = None, starting = None):
+def encode_text_cbc(content, file_path=None, given_key=None, given_iv=None, starting=None):
     # generate the iv and key
-    if given_key is None  and given_iv is None:
+    if given_key is None and given_iv is None:
         iv = secrets.token_bytes(16)
         key = secrets.token_bytes(16)
     else:
@@ -120,10 +96,9 @@ def encode_text_cbc(content, file_path = None, given_key = None, given_iv = None
         file_size = os.stat(file_path).st_size
     else:
         file_size = len(content)
-    
+
     if starting is None:
         starting = 54
-
 
     encrypted_byte_array = b""
     # generate the cipher
@@ -136,7 +111,7 @@ def encode_text_cbc(content, file_path = None, given_key = None, given_iv = None
 
     for i in range(starting, len(content), 16):
         # convert the bytes to ints for xor
-        int1 = int.from_bytes(content[i:i+16], 'big')
+        int1 = int.from_bytes(content[i:i + 16], 'big')
         int2 = int.from_bytes(xor_operand, 'big')
         # xor
         xor_output = int1 ^ int2
@@ -155,24 +130,15 @@ def encode_text_cbc(content, file_path = None, given_key = None, given_iv = None
     return encrypted_byte_array
 
 
-def print_bits_from_byte_array(barray):
-    for byte in barray:
-        for i in range(0, 8):
-            if byte:
-                print(f"{byte & 1}", end="")
-            else:
-                print("0", end="")
-            byte >>= 1
-    print("\n")
-
 def submit(string, key, iv):
     string = quote(string)
     new_string = prepend + string + append
     print(new_string)
 
-    encrypt = encode_text_cbc(new_string.encode("utf-8"), given_key = key, given_iv = iv, starting = 0)
+    encrypt = encode_text_cbc(new_string.encode("utf-8"), given_key=key, given_iv=iv, starting=0)
 
     return encrypt
+
 
 def cbc_decrypt(ciphertext, key, iv):
     # the first xor_operand is the iv
@@ -191,7 +157,7 @@ def cbc_decrypt(ciphertext, key, iv):
         # the xor_output should be the first block of plaintext
         xor_output = xor_operand ^ decrypt_result
         print(xor_output.to_bytes(16, 'big'))
-        
+
         # append the plaintext block 
         plaintext_array += xor_output.to_bytes(16, 'big')
 
@@ -200,6 +166,7 @@ def cbc_decrypt(ciphertext, key, iv):
 
     print(plaintext_array)
     return plaintext_array
+
 
 def verify(string):
     # generating the constant key and iv
@@ -217,29 +184,9 @@ def verify(string):
     if ";admin=true;" in decrypted_string.decode("utf-8"):
         print("Admin is true??")
         return True
-    else: 
+    else:
         return False
-
-def handle_mode_input():
-    while True:
-        mode = input("Select an encryption algorithm from specified options:\nECB - Electronic Codebook Mode\n"
-                     "CBC - Cipher Block Chaining Mode\n---------------------------------\n[ECB] or [CBC]: ").upper()
-        if mode == "ECB":
-            print("ECB selected, running encryption...")
-            return EncryptionMode.ECB
-        elif mode == "CBC":
-            print("CBC selected, running encryption...")
-            return EncryptionMode.CBC
-        print("Received input is invalid. Try again.")
 
 
 if __name__ == "__main__":
-    # should we validate file names? (I think I'm probably thinking to hard about things)
-    file = input("Enter file name: ")
-    # we can let users input what encryption they want to use... (or not if I'm missing something)
-    encryption_mode = handle_mode_input()
-    read_text(file, encryption_mode)
-
-    # idk if we should do it like this but works for now ig
-    string = input("Enter user provided string: ")
-    verify(string)
+    main()
