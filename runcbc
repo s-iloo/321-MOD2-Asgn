@@ -1,0 +1,9 @@
+#!/bin/bash
+
+python3 encrypter.py <<EOF
+bmps/4by4.bmp
+CBC
+output
+hello
+output1
+EOF
