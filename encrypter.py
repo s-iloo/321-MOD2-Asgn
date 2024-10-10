@@ -100,24 +100,13 @@ def encode_text_cbc(content, file_path=None, given_key=None, given_iv=None, star
     # generate the cipher
     cbc_cipher = AES.new(key, AES.MODE_CBC, iv)
     # add padding to plaintext
-    print("len of content ", len(content))
     content = add_padding(content, file_size, starting)
-    # XOR first plaintext block with IV
-    xor_operand = iv
+    print("len of content in encdoe is: ", len(content))
 
     for i in range(starting, len(content), 16):
-        # convert the bytes to ints for xor
-        int1 = int.from_bytes(content[i:i + 16], 'big')
-        int2 = int.from_bytes(xor_operand, 'big')
-        # xor
-        xor_output = int1 ^ int2
-        # convert the xor_output back to 16 byte block
-        xor_output = xor_output.to_bytes(16, 'big')
-        # encrypt
-        cipher_text = cbc_cipher.encrypt(xor_output)
+        # encrypt 16 bytes at a time
+        cipher_text = cbc_cipher.encrypt(content[i:i + 16])
         encrypted_byte_array += cipher_text
-        # set the next xor_operand to the generated cipher text
-        xor_operand = cipher_text
 
     encrypted_byte_array = content[0:starting] + encrypted_byte_array
     write_to_file(encrypted_byte_array)
@@ -135,31 +124,11 @@ def submit(string, key, iv):
 
 
 def cbc_decrypt(ciphertext, key, iv):
-    # the first xor_operand is the iv
-    xor_operand = iv
-    # generate the cbc_cipher with the key and the iv
     cbc_cipher = AES.new(key, AES.MODE_CBC, iv)
-    plaintext_array = b""
-
-    # loop through the cipher text 
-    for i in range(0, len(ciphertext), 16):
-        decrypt_result = cbc_cipher.decrypt(ciphertext[i:i + 16])
-
-        decrypt_result = int.from_bytes(decrypt_result, 'big')
-        xor_operand = int.from_bytes(xor_operand, 'big')
-
-        # the xor_output should be the first block of plaintext
-        xor_output = xor_operand ^ decrypt_result
-        print(xor_output.to_bytes(16, 'big'))
-
-        # append the plaintext block 
-        plaintext_array += xor_output.to_bytes(16, 'big')
-
-        # set the next xor_operand
-        xor_operand = ciphertext[i:i + 16]
-
-    print(plaintext_array)
-    return plaintext_array
+    # Decrypt the ciphertext
+    decrypted_data = cbc_cipher.decrypt(ciphertext)
+    print("decrypted data is: ", decrypted_data)
+    return decrypted_data
 
 
 def verify(string):
@@ -169,21 +138,20 @@ def verify(string):
 
     # getting the encrypted string
     encrypted_string = submit(string, key, iv)
-
     # bit flip?
-    bit_flip_attack(encrypted_string)
-
+    encrypted_string = bit_flip_attack(encrypted_string)
+    
     # decrypting the encrypted string
     decrypted_string = cbc_decrypt(encrypted_string, key, iv)
 
     print("DECRYPT WORK")
     print(decrypted_string)
-
+    
     decrypted_string = remove_padding(decrypted_string)
 
     print(decrypted_string)
 
-    if ";admin=true;" in decrypted_string.decode("utf-8"):
+    if b";admin=true;" in decrypted_string:
         print("Admin is true??")
         return True
     else:

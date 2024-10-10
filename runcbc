@@ -4,6 +4,6 @@ python3 encrypter.py <<EOF
 bmps/4by4.bmp
 CBC
 output.bmp
-hello
+admin.true
 cbchello.bin
 EOF

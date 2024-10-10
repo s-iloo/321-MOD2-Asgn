@@ -24,6 +24,7 @@ def add_padding(content, file_size, starting=54):
 # padding remover based on how we pad in add_padding
 def remove_padding(padded_data):
     # the last byte indicates the padding length
+    print("padded data: in remove padding: ",padded_data)
     padding_len = padded_data[-1]
     print(f"padding length {padding_len}")
     return padded_data[:-padding_len]
@@ -66,3 +67,14 @@ def handle_mode_input():
 def bit_flip_attack(ciphertext):
     # string we want to inject into the plaintext
     target = b";admin=true;"
+    ciphertext = bytearray(ciphertext)
+    period = '.'
+    equals = '='
+    bit = ord('.') ^ ord('=')
+    bit2 = ord('=') ^ ord(';')
+
+    # flipping period to equal sign
+    ciphertext[9] = ciphertext[9] ^ bit
+    # flipping equal sign to semicolon
+    ciphertext[3] = ciphertext[3] ^ bit2
+    return bytes(ciphertext)
