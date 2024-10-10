@@ -15,14 +15,11 @@ def main():
     try:
         with open(file_path, 'rb') as file:
             content = file.read()
-            print(f"content is \n{content}\n")
     except FileNotFoundError:
         print(f"Error: file not found {file_path}")
 
-    # TODO handle header size (54 bytes). We are encrypting .bmp files, not .txt files
     encode_text(content, file_path, encryption_mode)
 
-    # idk if we should do it like this but works for now ig
     string = input("Enter user provided string: ")
     verify(string)
 
@@ -51,7 +48,7 @@ def encode_text_ecb(content, file_path):
     # number of bytes that are added, i.e. N bytes, each of value N are added
 
     content = add_padding(content, file_size)
-    print("content size is: ", len(content[54:]))
+    print("content size with padding is: ", len(content[54:]))
 
     # init the cipher using key, and init the byte array to hold encrypted content
     # each block encrypted separately with the same key
@@ -59,7 +56,6 @@ def encode_text_ecb(content, file_path):
     encrypted_byte_array = b""
 
     header = content[0:54]
-    print("len of header ", len(header))
 
     # loop through 128 bits (16 bytes) at a time and
     # encrypt each 128 bit block with the generated key
@@ -68,12 +64,6 @@ def encode_text_ecb(content, file_path):
         encrypted_byte_array += ecb_cipher.encrypt(block)
 
     encrypted_byte_array = header + encrypted_byte_array
-    print(f"encrypted byte array is {encrypted_byte_array.hex()}")
-
-    print("bits are ", end="")
-    print_bits_from_byte_array(encrypted_byte_array)
-
-    print(f"DECRYPTOED: {ecb_cipher.decrypt(encrypted_byte_array[54:])}")
 
     write_to_file(encrypted_byte_array)
     return encrypted_byte_array
@@ -88,8 +78,6 @@ def encode_text_cbc(content, file_path=None, given_key=None, given_iv=None, star
         iv = given_iv
         key = given_key
 
-    print("Generated IV for CBC: ", iv.hex())
-
     # find the file size in bytes
     if file_path is not None:
         file_size = os.stat(file_path).st_size
@@ -101,22 +89,22 @@ def encode_text_cbc(content, file_path=None, given_key=None, given_iv=None, star
     cbc_cipher = AES.new(key, AES.MODE_CBC, iv)
     # add padding to plaintext
     content = add_padding(content, file_size, starting)
-    print("len of content in encdoe is: ", len(content))
 
     for i in range(starting, len(content), 16):
         # encrypt 16 bytes at a time
         cipher_text = cbc_cipher.encrypt(content[i:i + 16])
         encrypted_byte_array += cipher_text
 
-    encrypted_byte_array = content[0:starting] + encrypted_byte_array
+    encrypted_byte_array = content[:starting] + encrypted_byte_array
     write_to_file(encrypted_byte_array)
+    # decrypted = cbc_decrypt(encrypted_byte_array[starting:], key, iv)
+    # write_to_file(content[:starting] + decrypted)
     return encrypted_byte_array
 
 
 def submit(string, key, iv):
     string = quote(string)
     new_string = prepend + string + append
-    print(new_string)
 
     encrypt = encode_text_cbc(new_string.encode("utf-8"), given_key=key, given_iv=iv, starting=0)
 
@@ -126,8 +114,7 @@ def submit(string, key, iv):
 def cbc_decrypt(ciphertext, key, iv):
     cbc_cipher = AES.new(key, AES.MODE_CBC, iv)
     # Decrypt the ciphertext
-    decrypted_data = cbc_cipher.decrypt(ciphertext)
-    print("decrypted data is: ", decrypted_data)
+    decrypted_data = remove_padding(cbc_cipher.decrypt(ciphertext))
     return decrypted_data
 
 
@@ -138,21 +125,15 @@ def verify(string):
 
     # getting the encrypted string
     encrypted_string = submit(string, key, iv)
-    # bit flip?
+
+    # attacking the encrypted string
     encrypted_string = bit_flip_attack(encrypted_string)
     
     # decrypting the encrypted string
     decrypted_string = cbc_decrypt(encrypted_string, key, iv)
 
-    print("DECRYPT WORK")
-    print(decrypted_string)
-    
-    decrypted_string = remove_padding(decrypted_string)
-
-    print(decrypted_string)
-
     if b";admin=true;" in decrypted_string:
-        print("Admin is true??")
+        print("Admin is true?? (you've been attacked)")
         return True
     else:
         return False

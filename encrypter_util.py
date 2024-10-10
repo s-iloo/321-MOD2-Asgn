@@ -9,8 +9,6 @@ class EncryptionMode(Enum):
 
 # function that adds padding when a file's content isn't equally dividable into chunks of 16 bytes
 def add_padding(content, file_size, starting=54):
-    # TODO: saw something online that said that CBC always adds a full block of padding?
-    # unsure about that, should maybe check it out...
     if (file_size - starting) % 16 != 0:
         padding_size = 16 - ((file_size - starting) % 16)
         print("padding_size: ", padding_size)
@@ -24,9 +22,7 @@ def add_padding(content, file_size, starting=54):
 # padding remover based on how we pad in add_padding
 def remove_padding(padded_data):
     # the last byte indicates the padding length
-    print("padded data: in remove padding: ",padded_data)
     padding_len = padded_data[-1]
-    print(f"padding length {padding_len}")
     return padded_data[:-padding_len]
 
 
@@ -45,9 +41,10 @@ def print_bits_from_byte_array(barray):
 # prompting the user for file name, writing encrypted data to said file
 # note that files that require padding may not be open-able in original format
 def write_to_file(content):
-    file_name = input("Enter file (w/o extension) to write encrypted data: ")
+    file_name = input("Enter file to write encrypted data: ")
     with open("output/" + file_name, "wb") as f:
         f.write(content)
+    print(f"Content has been written to file output/{file_name}")
 
 
 def handle_mode_input():
@@ -66,10 +63,7 @@ def handle_mode_input():
 # given ciphertext, modifies it such that the decrypted plaintext contains the target string
 def bit_flip_attack(ciphertext):
     # string we want to inject into the plaintext
-    target = b";admin=true;"
     ciphertext = bytearray(ciphertext)
-    period = '.'
-    equals = '='
     bit = ord('.') ^ ord('=')
     bit2 = ord('=') ^ ord(';')
 
