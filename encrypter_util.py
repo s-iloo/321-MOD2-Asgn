@@ -13,6 +13,7 @@ def add_padding(content, file_size, starting=54):
         padding_size = 16 - ((file_size - starting) % 16)
         print("padding_size: ", padding_size)
         padding = bytes([padding_size] * padding_size)
+        print("padding: ", padding[0])
 
         return content + padding
 
@@ -45,7 +46,7 @@ def write_to_file(content):
     with open("output/" + file_name, "wb") as f:
         f.write(content)
     print(f"Content has been written to file output/{file_name}")
-
+    f.close()
 
 def handle_mode_input():
     while True:

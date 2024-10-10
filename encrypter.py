@@ -40,15 +40,7 @@ def encode_text_ecb(content, file_path):
     key = secrets.token_bytes(16)
     print(f"key is {key.hex()}")
 
-    # split the plain text content into 128 bit blocks
-    file_size = os.stat(file_path).st_size
-    print(f"file size is {file_size}")
-
-    # padding is in whole bytes, the value of each added byte is the
-    # number of bytes that are added, i.e. N bytes, each of value N are added
-
-    content = add_padding(content, file_size)
-    print("content size with padding is: ", len(content[54:]))
+    content = add_padding(content, len(content))    
 
     # init the cipher using key, and init the byte array to hold encrypted content
     # each block encrypted separately with the same key
@@ -64,7 +56,6 @@ def encode_text_ecb(content, file_path):
         encrypted_byte_array += ecb_cipher.encrypt(block)
 
     encrypted_byte_array = header + encrypted_byte_array
-
     write_to_file(encrypted_byte_array)
     return encrypted_byte_array
 
