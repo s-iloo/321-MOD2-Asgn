@@ -88,8 +88,6 @@ def encode_text_cbc(content, file_path=None, given_key=None, given_iv=None, star
 
     encrypted_byte_array = content[:starting] + encrypted_byte_array
     write_to_file(encrypted_byte_array)
-    # decrypted = cbc_decrypt(encrypted_byte_array[starting:], key, iv)
-    # write_to_file(content[:starting] + decrypted)
     return encrypted_byte_array
 
 
