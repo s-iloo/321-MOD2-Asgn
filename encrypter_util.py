@@ -22,9 +22,7 @@ def add_padding(content, file_size, starting=54):
 def remove_padding(padded_data):
     # the last byte indicates the padding length
     padding_len = padded_data[-1]
-    print("padded data: ", padded_data[-padding_len:])
     if len(set(padded_data[-padding_len:])) == 1:
-        print("there is padding: ", padding_len)
         return padded_data[:-padding_len]
     return padded_data
 
